@@ -12,7 +12,7 @@ import { bannerType } from "./bannerType";
 import { brandType } from "./brandTypes";
 import { blogType } from "./blogType";
 import { blogCategoryType } from "./blogCategoryType";
-import { authorType } from "./authType";
+import { authorType } from "./authorType";
 import { addressType } from "./addressType";
 import { contactType } from "./contactType";
 import { sentNotificationType } from "./sentNotificationType";

@@ -2,7 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@theme {
+/* Ensure Tailwind scans all source files (fix: utilities not generated) */
+@source "..*.{js,ts,jsx,tsx}";
+
+@theme inline {
   /* Custom colors start */
   --color-gofarm-white: #ffffff;
   --color-gofarm-black: #000000;
