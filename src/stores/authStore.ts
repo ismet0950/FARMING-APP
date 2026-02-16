@@ -18,6 +18,7 @@ import {
 
 import { auth } from "../lib/firebase"
 import { toast } from "sonner";
+import { error } from "console";
 
 interface AuthState {
     User: User | null
@@ -53,6 +54,27 @@ export const useAuthStore = create<AuthState>((set, get)
                 return result;
             } catch (error: any) {
                 toast.error(error.message || "Failed to sign");
+                throw error;
+            }
+        },
+
+        signUp: async (email: string, password: string,
+            displayName?: string) => {
+            try {
+                const result = await createUserWithEmailAndPassword(
+                    auth,
+                    email,
+                    password
+                );
+
+                if (displayName && result.user) {
+                    await updateProfile(result.user, { displayName });
+                }
+                // Sync will happen in onAuthStateChanged
+                toast.success("Account created successfully")
+                return result;
+            } catch (error: any) {
+                toast.error(error.message || "Failed to create accakmaofikmae")
                 throw error;
             }
         },
