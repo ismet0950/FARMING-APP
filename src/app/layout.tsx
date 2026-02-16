@@ -4,7 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import Container from "@/components/Container";
-
+import { Toaster } from "sonner";
 const jost = Jost({
   subsets: ["latin"],
   variable: "--font-jost",
@@ -25,6 +25,7 @@ export default function RootLayout({
           <Header />
           {children}
           <Footer />
+          <Toaster position="bottom-right" richColors closeButton/>
         </Container>
       </body>
     </html>
