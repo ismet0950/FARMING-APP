@@ -46,6 +46,7 @@ export const useAuthStore = create<AuthState>((set, get)
         loading: true,
         setUser: (user) => set({ user }),
         setLoading: (loading) => set({ loading }),
+
         signIn: async (email: string, password: string) => {
             try {
                 const result = await signInWithEmailAndPassword(auth, email, password);
@@ -58,8 +59,7 @@ export const useAuthStore = create<AuthState>((set, get)
             }
         },
 
-        signUp: async (email: string, password: string,
-            displayName?: string) => {
+        signUp: async (email: string, password: string, displayName?: string) => {
             try {
                 const result = await createUserWithEmailAndPassword(
                     auth,
@@ -78,4 +78,6 @@ export const useAuthStore = create<AuthState>((set, get)
                 throw error;
             }
         },
+        //gooogle facebook
     }));
+
