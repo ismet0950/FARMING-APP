@@ -54,7 +54,7 @@ async function syncUserToSanityAPI(user: User):
             const error = await response.json();
             console.error("Failed to sync user to Sanity", error);
         }
-    }catch(error) {
+    } catch (error) {
         console.error("X Error syncing user to Sanity:", error)
     }
 }
@@ -217,40 +217,54 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ token }),
                     });
-            }
-            if (!sessionResponse.ok) {
-                console.error("Failed to set session cookie");
-                set({ loading: false });
-                return;
-            }
 
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            tokenRefreshInterval = setInterval(async () => {
-                try {
-                    const currentUser = auth.currentUser;
-                    if (currentUser) {
-                        const freshToken = await currentUser.
-                            getIdToken(true);
-                        await fetch("/api/auth/session", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application json"
-                            },
-                            body: JSON.stringify({
-                                token: freshToken
-                            }),
-                        });
-                    }
-                } catch (error) {
-                    console.error("X Failed to refresh token:",
-                        error);
+                if (!sessionResponse.ok) {
+                    console.error("Failed to set session cookie");
+                    set({ loading: false });
+                    return;
                 }
-            }, 50 * 60 * 1000); // 50 minutes
 
-            await syncUserToSanityAPI(user);
+                await new Promise((resolve) => setTimeout(resolve, 100));
 
-            const { default: useCartStore } = await 
+                tokenRefreshInterval = setInterval(async () => {
+                    try {
+                        const currentUser = auth.currentUser;
+                        if (currentUser) {
+                            const freshToken = await currentUser.
+                                getIdToken(true);
+                            await fetch("/api/auth/session", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application json"
+                                },
+                                body: JSON.stringify({
+                                    token: freshToken
+                                }),
+                            });
+                        }
+                    } catch (error) {
+                        console.error("X Failed to refresh token:",
+                            error);
+                    }
+                }, 50 * 60 * 1000); // 50 minutes
+
+                await syncUserToSanityAPI(user);
+
+                // const { default: useCartStore } = await import("@/store")
+            } else {
+                await fetch("/api/auth/session", {
+                    method: "DELETE",
+                });
+
+                set({ loading: false });
+            }
+        });
+
+        return () => {
+            if (tokenRefreshInterval) {
+                clearInterval(tokenRefreshInterval);
+            }
+            unsubscribe();
         }
     }
 }));
