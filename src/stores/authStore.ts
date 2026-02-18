@@ -40,6 +40,24 @@ interface AuthState {
     initializeAuth: () => () => void;
 }
 
+async function syncUserToSanityAPI(user: User):
+    Promise<void> {
+    try {
+        const idToken = await user.getIdToken();
+        const response = await fetch("/api/auth/sync-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error("Failed to sync user to Sanity", error);
+        }
+    }catch(error) {
+        console.error("X Error syncing user to Sanity:", error)
+    }
+}
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     loading: true,
@@ -143,6 +161,96 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } catch (error: any) {
             toast.error(error.message || "Failed to complete sign-in")
             throw error
+        }
+    },
+
+    logout: async () => {
+        try {
+            // Flush any pending cart sync before logging out
+            const { default: useCartStore } = await import("@/store");
+            await useCartStore.getState().flushPendingSync();
+
+            await signOut(auth);
+            toast.success("Successfully signed out!");
+
+            // Clear all local storage and session data
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Redirect to home page and force reload to clear all state
+
+            window.location.href = "/"
+        } catch (error: any) {
+            console.error("X Logout error", error);
+            toast.error(error.message || "failed to sign out")
+            throw error
+        }
+    },
+
+    resetPassword: async (email: string) => {
+        try {
+            await sendPasswordResetEmail(auth, email);
+            toast.success("Password reset email sent!");
+        } catch (error: any) {
+            toast.error(error.message || "failed to send email");
+            throw error;
+        }
+    },
+
+    initializeAuth: () => {
+        let tokenRefreshInterval: NodeJS.Timeout | null = null;
+
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            set({ user });
+
+            // Clear existing token refresh interval
+            if (tokenRefreshInterval) {
+                clearInterval(tokenRefreshInterval);
+                tokenRefreshInterval = null;
+            }
+            if (user) {
+                // Get fresh token and set session
+                const token = await user.getIdToken(true);
+                const sessionResponse = await fetch("/api/auth/session",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ token }),
+                    });
+            }
+            if (!sessionResponse.ok) {
+                console.error("Failed to set session cookie");
+                set({ loading: false });
+                return;
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            tokenRefreshInterval = setInterval(async () => {
+                try {
+                    const currentUser = auth.currentUser;
+                    if (currentUser) {
+                        const freshToken = await currentUser.
+                            getIdToken(true);
+                        await fetch("/api/auth/session", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application json"
+                            },
+                            body: JSON.stringify({
+                                token: freshToken
+                            }),
+                        });
+                    }
+                } catch (error) {
+                    console.error("X Failed to refresh token:",
+                        error);
+                }
+            }, 50 * 60 * 1000); // 50 minutes
+
+            await syncUserToSanityAPI(user);
+
+            const { default: useCartStore } = await 
         }
     }
 }));
