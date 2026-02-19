@@ -27,3 +27,14 @@ export async function POST(request: NextRequest) {
         )
     }
 }
+
+
+export async function DELETE() {
+    const response = NextResponse.json({ success: true });
+
+    response.cookies.delete("session");
+    response.cookies.delete("firebaseToken") 
+    // Also delete legacy cookie if exists 
+
+    return response
+}

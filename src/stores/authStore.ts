@@ -70,8 +70,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             // Sync will happen in onAuthStateChanged
             toast.success("Successfully signed in!");
             return result;
-        } catch (error: any) {
-            toast.error(error.message || "Failed to sign");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message:"Failed to sign in";
+            toast.error(message)
             throw error;
         }
     },
